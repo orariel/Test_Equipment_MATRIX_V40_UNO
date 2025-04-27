@@ -4,10 +4,12 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
-const int IN1 = 8;
-const int IN2 = 12;
-const int IN3 = 13;
+const int IN1 = 4;
+const int IN2 = 7;
+const int IN3 = 8;
 const int StartPin = 2;
+const int DelayX=2000;
+
 enum state {IDLE,OPEN_COLUNMS ,OPEN_ROWS,  OPEN_CELL_FROM_LEFT ,  OPEN_CELL_FROM_RIGHT , OPEN_CELL_BY_CELL,CHECK_INPUT,TEST_ALL};
 enum state StateMachine = CHECK_INPUT;
 void startBitISR() {
@@ -21,10 +23,11 @@ void setup() {
 
   Wire.begin();  // Initialize I2C as master
   Wire.setClock(75000);
-  pinMode(IN1, INPUT_PULLUP);
-  pinMode(IN2, INPUT_PULLUP);
-  pinMode(IN3, INPUT_PULLUP);
-  pinMode(StartPin, INPUT);
+  pinMode(IN1, INPUT);
+  pinMode(IN2, INPUT);
+  pinMode(IN3, INPUT);
+  pinMode(StartPin, INPUT_PULLUP);
+  pinMode(13, OUTPUT);
   attachInterrupt(digitalPinToInterrupt(StartPin), startBitISR, CHANGE);  // Attach interrupt to the start pin
 
   
@@ -291,17 +294,26 @@ void RowsCheck(){ // This function open all rows from left to right
       uint8_t dataToSend=rowLUTforOPENrowsONLY[ index][1];
       uint8_t addressToSend=rowLUTforOPENrowsONLY[ index][0];
       writeByteToI2C(addressToSend, dataToSend);
-      delay(100);
+      delay(DelayX);
     }
 
 }
 
 void get_inputs_status(){
 
+//   bitInOne=1; 
+//   bitInTwo=1;
+//   bitInThree=1;
+//   start_bit=1;
   bitInOne=1-digitalRead(IN1); 
   bitInTwo=1-digitalRead(IN2);
   bitInThree=1-digitalRead(IN3);
   start_bit=digitalRead(StartPin);
+  if (start_bit)
+  {
+    digitalWrite(13,HIGH);
+  }
+  
 
 } 
 
@@ -311,9 +323,13 @@ void loop() {
     get_inputs_status();
     // Serial.print("The first bit is: ");
     // Serial.print(bitInOne);
-    //     Serial.print(" |The SEC bit is: ");
+    // Serial.print(" |The SEC bit is: ");
     // Serial.print(bitInTwo);
-        // Serial.print(" |The THIRD bit is: ");
+    // Serial.print(" |The THIRD bit is: ");
+    // Serial.print(bitInThree);
+    // Serial.print(" |start: ");
+    // Serial.print(start_bit);
+    // Serial.println();
 
 
 
@@ -322,7 +338,7 @@ void loop() {
     // Check input and update state machine
     switch (StateMachine) {
         case CHECK_INPUT:
-            if (bitInOne == 0 && bitInTwo == 0 && bitInThree == 1 && start_bit == HIGH) {
+            if (bitInOne == 0 && bitInTwo == 0 && bitInThree == 1 && start_bit == HIGH)  {
                 StateMachine = OPEN_ROWS;
             } else if (bitInOne == 0 && bitInTwo == 1 && bitInThree == 0 && start_bit == HIGH) {
                 StateMachine = OPEN_COLUNMS;
@@ -339,6 +355,7 @@ void loop() {
 
         case OPEN_ROWS:
             RowsCheck();
+             
             closeAll();
             delay(1000);
             StateMachine=IDLE;
@@ -353,7 +370,7 @@ void loop() {
             break;
 
         case OPEN_CELL_FROM_LEFT:
-            OpenCellLeft(50, 25);
+            OpenCellLeft(100, 50);    
             closeAll();
             delay(1000);
             StateMachine=IDLE;
@@ -371,11 +388,11 @@ void loop() {
             closeAll();
             delay(1000);
             StateMachine=IDLE;
-
+            break;
         case IDLE:
              get_inputs_status();
              StateMachine=CHECK_INPUT;
-             printf("IDLE.....");
+        
            
 
             break;
