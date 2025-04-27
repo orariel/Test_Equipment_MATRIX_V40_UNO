@@ -8,7 +8,7 @@ const int IN1 = 4;
 const int IN2 = 7;
 const int IN3 = 8;
 const int StartPin = 2;
-const int DelayX=2000;
+const int DelayX=2200;
 
 enum state {IDLE,OPEN_COLUNMS ,OPEN_ROWS,  OPEN_CELL_FROM_LEFT ,  OPEN_CELL_FROM_RIGHT , OPEN_CELL_BY_CELL,CHECK_INPUT,TEST_ALL};
 enum state StateMachine = CHECK_INPUT;
@@ -294,8 +294,18 @@ void RowsCheck(){ // This function open all rows from left to right
       uint8_t dataToSend=rowLUTforOPENrowsONLY[ index][1];
       uint8_t addressToSend=rowLUTforOPENrowsONLY[ index][0];
       writeByteToI2C(addressToSend, dataToSend);
-      delay(DelayX);
+      if(index==8)
+      {
+        delay(100);
+      }
+      
+      else
+      {
+        delay(DelayX);
+      }
+     
     }
+    
 
 }
 
